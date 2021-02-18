@@ -12,7 +12,7 @@ def get_truth(length, states):
         return [[i] + result for i in range(states) for result in get_truth(length - 1, states)]
 
 
-def sanguosha(arr, desired=None):
+def sanguosha(arr, desired=None, number_of_output=8):
     assigned = get_truth(len(arr), 3)
     sum_groups = [
         [sum([arr[idx] for idx, group in enumerate(group_id) if group == target]) for target in range(2)]
@@ -27,8 +27,11 @@ def sanguosha(arr, desired=None):
     del assigned
     final_count = [len(group[0]) + len(group[1]) for group in final_groups]
 
-    unique_idx = [idx for idx, group in enumerate(final_groups)
-                  if [group[1], group[0], group[2]] not in final_groups[:idx]]
+    final_groups_string = ['|'.join(sorted([','.join(list(map(str, sorted(numbers)))) for numbers in group]))
+                           for group in final_groups]
+
+    unique_idx = [idx for idx, group in enumerate(final_groups_string)
+                  if group not in final_groups_string[:idx]]
 
     final_groups = [final_groups[idx] for idx in unique_idx]
     final_count = [final_count[idx] for idx in unique_idx]
@@ -40,11 +43,13 @@ def sanguosha(arr, desired=None):
     final_count = [final_count[idx] for idx in sorted_idx]
     final_sum = [final_sum[idx] for idx in sorted_idx]
 
-    for group, count, sums in zip(final_groups, final_count, final_sum):
+    for i, (group, count, sums) in enumerate(zip(final_groups, final_count, final_sum)):
         if desired is None:
             wanted = [False]
         else:
             wanted = [d in group[0] or d in group[1] for d in desired]
+        if i >= number_of_output:
+            break
         print(f'{"**" if all(wanted) else "* " if any(wanted) else "  "}{count}: '
               f'{"+".join(list(map(str, group[0])))} = {"+".join(list(map(str, group[1])))} = {sums}')
 
@@ -55,10 +60,12 @@ def get_args():
                         help='all cards')
     parser.add_argument('-d', '--desired', type=int, nargs='+',
                         help='priority cards.')
+    parser.add_argument('-n', '--number_of_output', type=int, default=10,
+                        help='The number of output to print.')
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
     args = get_args()
-    sanguosha(args.integers, desired=args.desired)
+    sanguosha(args.integers, desired=args.desired, number_of_output=args.number_of_output)
